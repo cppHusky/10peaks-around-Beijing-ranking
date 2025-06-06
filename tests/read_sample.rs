@@ -22,14 +22,14 @@ fn open_and_read(){
 fn parse_record(){
 	let mut workbook:calamine::Xls<_>=calamine::open_workbook("./sample.xls").expect("Cannot open sample.xls");
 	let data=workbook.worksheet_range("汇总名单").expect("Cannot find sheet `汇总名单`");
-	let data:calamine::Range<calamine::Data>=data.range((2,1),data.end().unwrap());
+	let data:calamine::Range<calamine::Data>=data.range((2,0),data.end().unwrap());
 	let mut data=data.rows();
 	assert_eq!(
-		ranking::Record::from_row(data.nth(5).unwrap()),
-		ranking::Record::from("己".to_string(),[2,0,5,0,1],true)
+		record::Record::from_row(data.nth(5).unwrap()),
+		record::Record::from(6,"己".to_string(),[2,0,5,0,1],true)
 	);
 	assert_eq!(
-		ranking::Record::from_row(data.nth(5).unwrap()),
-		ranking::Record::from("2025-01-01".to_string(),[0,0,0,0,0],false)
+		record::Record::from_row(data.nth(5).unwrap()),
+		record::Record::from(12,"2025-01-01".to_string(),[0,0,0,0,0],false)
 	);
 }
