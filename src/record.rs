@@ -8,7 +8,7 @@ pub struct Record{
 	dongling:bool,
 }
 impl Record{
-	const MAXIMUM:[i32;5]=[10,5,5,5,5];
+	pub const MAXIMUM:[i32;5]=[10,5,5,5,5];
 	pub fn new()->Self{
 		Self{
 			id:0,
@@ -48,6 +48,12 @@ impl Record{
 	}
 	pub fn sum(&self)->i32{
 		self.sum
+	}
+	pub fn sum_prefix(&self,n:usize)->i32{
+		self.record.iter().take(n).sum()
+	}
+	pub fn dongling(&self)->bool{
+		self.dongling
 	}
 }
 impl PartialOrd<Record> for Record{

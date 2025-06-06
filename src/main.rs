@@ -12,5 +12,6 @@ fn main()->Result<(),Box<dyn std::error::Error>>{
 		records.push(record::Record::from_row(r));
 	}
 	records.sort();
+	draw::draw(&records);
 	Ok(())
 }
