@@ -50,7 +50,7 @@ impl Record{
 		self.sum
 	}
 	pub fn sum_prefix(&self,n:usize)->i32{
-		self.record.iter().take(n).sum()
+		self.record.iter().take(n+1).sum()
 	}
 	pub fn dongling(&self)->bool{
 		self.dongling
