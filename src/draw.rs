@@ -10,7 +10,7 @@ const COLORS:[RGBColor;5]=[
 	RGBColor(0xb3,0x3d,0xc6),
 ];
 const WIDTH:i32=3156;
-const HEADING_HEIGHT:i32=600;
+const HEADING_HEIGHT:i32=800;
 const PIECE_LEFT:i32=656;
 const PIECE_RIGHT:i32=2800;
 const PIECE_HEIGHT:i32=60;
@@ -18,7 +18,7 @@ const PIECE_SEP:i32=40;
 pub fn draw(records:&Vec<record::Record>,title:&String)->Result<(),Box<dyn std::error::Error>>{
 	let max_count:i32=records[0].sum();
 	let unit_len:i32=(PIECE_RIGHT-PIECE_LEFT)/max_count;
-	let height:i32=(HEADING_HEIGHT+(records.len() as i32)*(PIECE_HEIGHT+PIECE_SEP));
+	let height:i32=HEADING_HEIGHT+(records.len() as i32)*(PIECE_HEIGHT+PIECE_SEP);
 	let root=BitMapBackend::new(
 		"export.png",
 		(WIDTH as u32,height as u32),
@@ -33,12 +33,12 @@ fn draw_captions(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,title:S
 	let _=root.draw(&Text::new(
 		title,
 		(PIECE_LEFT,100),
-		("Noto Sans CJK SC",108.).into_font()
+		("Noto Sans CJK SC",108.,FontStyle::Bold).into_font()
 	));
 	let text_style=TextStyle::from(("Noto Sans CJK SC",80.).into_font()).pos(text_anchor::Pos::new(text_anchor::HPos::Center,text_anchor::VPos::Center));
 	let _=root.draw(&Text::new(
 		"图例",
-		(PIECE_LEFT/2,350),
+		(PIECE_LEFT/2,500),
 		TextStyle::from(("Noto Sans CJK SC",80.,FontStyle::Bold).into_font()).pos(text_anchor::Pos::new(text_anchor::HPos::Left,text_anchor::VPos::Center)),
 	));
 	let _=root.draw(&Circle::new(
@@ -67,12 +67,22 @@ fn draw_captions(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,title:S
 	block("军都龙脉",0.6,2);
 	block("燕山天路",0.8,3);
 	block("坝上风云",1.0,4);
+	let text_style=TextStyle::from(("Noto Sans CJK SC",80.).into_font()).pos(text_anchor::Pos::new(text_anchor::HPos::Left,text_anchor::VPos::Center));
+	let _=root.draw(&PathElement::new(
+		[(PIECE_LEFT,600),(PIECE_LEFT/2+PIECE_RIGHT/2,600)],
+		ShapeStyle::from(RGBColor(0x00,0x00,0x00)).stroke_width(10),
+	));
+	let _=root.draw(&Text::new(
+		"支线完成",
+		(PIECE_LEFT/2+PIECE_RIGHT/2+50,600),
+		&text_style,
+	));
 }
 fn draw_records(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,records:&Vec<record::Record>,unit_len:i32){
-	let mut y_offset=0;
-	let mut last_sum=record::Record::MAXIMUM.iter().sum::<i32>()+1;
-	for r in records{
-		//if r.sum()==0{
+let mut y_offset=0;
+let mut last_sum=record::Record::MAXIMUM.iter().sum::<i32>()+1;
+for r in records{
+//if r.sum()==0{
 		//	continue;
 		//}
 		if r.sum()!=last_sum && r.sum()>0{
@@ -83,17 +93,33 @@ fn draw_records(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,records:
 				TextStyle::from(("Noto Sans CJK Sc",108.0,FontStyle::Bold).into_font()).pos(text_anchor::Pos::new(text_anchor::HPos::Left,text_anchor::VPos::Center)),
 			));
 		}
-		let draw_pieces=|end_pos:i32,color_id:usize|{
-			let _=root.draw(&Rectangle::new(
-				[(PIECE_LEFT,HEADING_HEIGHT-PIECE_HEIGHT/2+y_offset),(PIECE_LEFT+end_pos*unit_len,HEADING_HEIGHT+PIECE_HEIGHT/2+y_offset)],
-				COLORS[color_id].filled(),
-			));
+		let draw_pieces=|start_pos:i32,end_pos:i32,id:usize|{
+			if start_pos==end_pos{
+				return;
+			}
+			else{
+				let _=root.draw(&Rectangle::new(
+					[(PIECE_LEFT,HEADING_HEIGHT-PIECE_HEIGHT/2+y_offset),(PIECE_LEFT+end_pos*unit_len-PIECE_HEIGHT/2+1,HEADING_HEIGHT+PIECE_HEIGHT/2+y_offset)],
+					COLORS[id].filled(),
+				));
+				let _=root.draw(&Circle::new(
+					(PIECE_LEFT+end_pos*unit_len-PIECE_HEIGHT/2,HEADING_HEIGHT+y_offset),
+					PIECE_HEIGHT/2-1,
+					COLORS[id].filled(),
+				));
+			}
+			if end_pos-start_pos==record::Record::MAXIMUM[id]{
+				let _=root.draw(&PathElement::new(
+					[(PIECE_LEFT+start_pos*unit_len+unit_len/2,HEADING_HEIGHT+y_offset),(PIECE_LEFT+end_pos*unit_len-unit_len/2,HEADING_HEIGHT+y_offset)],
+					ShapeStyle::from(RGBColor(0x00,0x00,0x00)).stroke_width(10),
+				));
+			}
 		};
-		draw_pieces(r.sum(),4);
-		draw_pieces(r.sum_prefix(3),3);
-		draw_pieces(r.sum_prefix(2),2);
-		draw_pieces(r.sum_prefix(1),1);
-		draw_pieces(r.sum_prefix(0),0);
+		draw_pieces(r.sum_prefix(3),r.sum(),4);
+		draw_pieces(r.sum_prefix(2),r.sum_prefix(3),3);
+		draw_pieces(r.sum_prefix(1),r.sum_prefix(2),2);
+		draw_pieces(r.sum_prefix(0),r.sum_prefix(1),1);
+		draw_pieces(0,r.sum_prefix(0),0);
 		if r.dongling(){
 			let _=root.draw(&Circle::new(
 				(PIECE_LEFT+unit_len/2,HEADING_HEIGHT+y_offset),
@@ -115,7 +141,7 @@ fn draw_gridlines(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,unit_l
 		[(PIECE_LEFT-4,HEADING_HEIGHT-PIECE_HEIGHT),(PIECE_LEFT-4,height-PIECE_HEIGHT)],
 		ShapeStyle::from(RGBColor(0x00,0x00,0x00)).stroke_width(4),
 	));
-	for i in 1..max_count{
+	for i in 1..max_count+1{
 		if i%5==0{
 			let _=root.draw(&PathElement::new(
 				[(PIECE_LEFT+unit_len*i,HEADING_HEIGHT-PIECE_HEIGHT),(PIECE_LEFT+unit_len*i,height-PIECE_HEIGHT)],
