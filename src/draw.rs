@@ -10,7 +10,7 @@ const COLORS:[RGBColor;5]=[
 	RGBColor(0xb3,0x3d,0xc6),
 ];
 const WIDTH:i32=3156;
-const HEADING_HEIGHT:i32=800;
+const HEADING_HEIGHT:i32=600;
 const PIECE_LEFT:i32=656;
 const PIECE_RIGHT:i32=2800;
 const PIECE_HEIGHT:i32=60;
@@ -38,17 +38,17 @@ fn draw_captions(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,title:S
 	let text_style=TextStyle::from(("Noto Sans CJK SC",80.).into_font()).pos(text_anchor::Pos::new(text_anchor::HPos::Center,text_anchor::VPos::Center));
 	let _=root.draw(&Text::new(
 		"图例",
-		(PIECE_LEFT/2,500),
+		(PIECE_LEFT/2,350),
 		TextStyle::from(("Noto Sans CJK SC",80.,FontStyle::Bold).into_font()).pos(text_anchor::Pos::new(text_anchor::HPos::Left,text_anchor::VPos::Center)),
 	));
 	let _=root.draw(&Circle::new(
-		(PIECE_LEFT+60,300),
+		(((PIECE_LEFT as f64)*0.95+(PIECE_RIGHT as f64)*0.05) as i32,300),
 		PIECE_HEIGHT/3,
 		Into::<ShapeStyle>::into(&BLACK).filled(),
 	));
 	let _=root.draw(&Text::new(
-		"东灵",
-		(PIECE_LEFT+60,400),
+		"东灵完成",
+		(((PIECE_LEFT as f64)*0.95+(PIECE_RIGHT as f64)*0.05) as i32,400),
 		&text_style,
 	));
 	let block=|name:&str,pos_rate:f64,color_id:usize|{
@@ -63,18 +63,18 @@ fn draw_captions(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,title:S
 		));
 	};
 	block("太行之巅",0.2,0);
-	block("京西龙脊",0.4,1);
-	block("军都龙脉",0.6,2);
-	block("燕山天路",0.8,3);
-	block("坝上风云",1.0,4);
-	let text_style=TextStyle::from(("Noto Sans CJK SC",80.).into_font()).pos(text_anchor::Pos::new(text_anchor::HPos::Left,text_anchor::VPos::Center));
-	let _=root.draw(&PathElement::new(
-		[(PIECE_LEFT,600),(PIECE_LEFT/2+PIECE_RIGHT/2,600)],
-		ShapeStyle::from(RGBColor(0x00,0x00,0x00)).stroke_width(10),
+	block("京西龙脊",0.35,1);
+	block("军都龙脉",0.5,2);
+	block("燕山天路",0.65,3);
+	block("坝上风云",0.8,4);
+	let _=root.draw(&Text::new(
+		"✓",
+		(((PIECE_LEFT as f64)*0.05+(PIECE_RIGHT as f64)*0.95) as i32,300),
+		TextStyle::from(("Noto Sans CJK SC",80.,FontStyle::Bold).into_font()).pos(text_anchor::Pos::new(text_anchor::HPos::Center,text_anchor::VPos::Center)),
 	));
 	let _=root.draw(&Text::new(
 		"支线完成",
-		(PIECE_LEFT/2+PIECE_RIGHT/2+50,600),
+		(((PIECE_LEFT as f64)*0.05+(PIECE_RIGHT as f64)*0.95) as i32,400),
 		&text_style,
 	));
 }
@@ -93,6 +93,9 @@ for r in records{
 				TextStyle::from(("Noto Sans CJK Sc",108.0,FontStyle::Bold).into_font()).pos(text_anchor::Pos::new(text_anchor::HPos::Left,text_anchor::VPos::Center)),
 			));
 		}
+		let pos=text_anchor::Pos::new(text_anchor::HPos::Right,text_anchor::VPos::Center);
+		let text_style=TextStyle::from(("Noto Sans CJK SC",80.0).into_font()).pos(pos);
+		let text_bold_style=TextStyle::from(("Noto Sans CJK SC",80.0,FontStyle::Bold).into_font()).pos(pos);
 		let draw_pieces=|start_pos:i32,end_pos:i32,id:usize|{
 			if start_pos==end_pos{
 				return;
@@ -109,9 +112,10 @@ for r in records{
 				));
 			}
 			if end_pos-start_pos==record::Record::MAXIMUM[id]{
-				let _=root.draw(&PathElement::new(
-					[(PIECE_LEFT+start_pos*unit_len+unit_len/2,HEADING_HEIGHT+y_offset),(PIECE_LEFT+end_pos*unit_len-unit_len/2,HEADING_HEIGHT+y_offset)],
-					ShapeStyle::from(RGBColor(0x00,0x00,0x00)).stroke_width(10),
+				let _=root.draw(&Text::new(
+					"✓",
+					(PIECE_LEFT+end_pos*unit_len-unit_len/2,HEADING_HEIGHT+y_offset+5),
+					&text_bold_style,
 				));
 			}
 		};
@@ -127,11 +131,10 @@ for r in records{
 				Into::<ShapeStyle>::into(&BLACK).filled(),
 			));
 		}
-		let pos=text_anchor::Pos::new(text_anchor::HPos::Right,text_anchor::VPos::Center);
 		let _=root.draw(&Text::new(
 			r.name().as_str(),
 			(PIECE_LEFT-50,HEADING_HEIGHT+y_offset),
-			TextStyle::from(("Noto Sans CJK SC",80.0).into_font()).pos(pos),
+			&text_style,
 		));
 		y_offset+=PIECE_HEIGHT+PIECE_SEP;
 	}
