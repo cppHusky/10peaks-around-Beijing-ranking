@@ -28,13 +28,13 @@ impl Record{
 		}
 	}
 	pub fn from_row(row:&[calamine::Data])->Self{
-		let id:i32=row[0].get_int().expect("Unable to convert to int").try_into().unwrap();
+		let id:i32=row[0].as_string().unwrap().parse::<i32>().expect("Unable to parse id");
 		let name:String=row[1].get_string().unwrap().to_string();
 		let mut record:[i32;5]=[0;5];
 		for i in 0..5{
-			record[i]=row[i+10].get_int().expect("Unable to convert to int").try_into().unwrap();
+			record[i]=row[i+2].as_i64().expect("Unable to convert to int").try_into().unwrap();
 		}
-		let dongling=row[16].get_string()==Some("是");
+		let dongling=row[8].get_string()==Some("是");
 		Self{
 			id,
 			name,
@@ -78,16 +78,16 @@ mod tests{
 	#[test]
 	fn open_and_read(){
 		let mut workbook:calamine::Xls<_>=calamine::open_workbook("./sample.xls").expect("Cannot open sample.xls");
-		let data=workbook.worksheet_range("汇总名单").expect("Cannot find sheet `汇总名单`");
+		let data=workbook.worksheet_range("10峰排行榜").expect("Cannot find sheet `10峰排行榜`");
 		assert_eq!(data.start(),Some((0,0)));
 		assert_eq!(data.end(),Some((15,16)));
 		assert_eq!(data[(2,0)].get_int(),Some(1));
 		assert_eq!(data[(3,1)].get_string(),Some("乙"));
-		assert_eq!(data[(6,10)].get_int(),Some(1));
-		assert_eq!(data[(7,11)].get_int(),Some(0));
-		assert_eq!(data[(8,12)].get_int(),Some(4));
-		assert_eq!(data[(9,13)].get_int(),Some(0));
-		assert_eq!(data[(10,14)].get_int(),Some(2));
+		assert_eq!(data[(6,10)].as_i64(),Some(1));
+		assert_eq!(data[(7,11)].as_i64(),Some(0));
+		assert_eq!(data[(8,12)].as_i64(),Some(4));
+		assert_eq!(data[(9,13)].as_i64(),Some(0));
+		assert_eq!(data[(10,14)].as_i64(),Some(2));
 		assert_eq!(data[(11,16)].get_string(),Some("是"));
 		assert_eq!(data[(12,1)].get_string(),Some("123456789"));
 		assert_eq!(data[(13,1)].get_string(),Some("2025-01-01"));
@@ -97,7 +97,7 @@ mod tests{
 	#[test]
 	fn parse_record(){
 		let mut workbook:calamine::Xls<_>=calamine::open_workbook("./sample.xls").expect("Cannot open sample.xls");
-		let data=workbook.worksheet_range("汇总名单").expect("Cannot find sheet `汇总名单`");
+		let data=workbook.worksheet_range("10峰排行榜").expect("Cannot find sheet `10峰排行榜`");
 		let data:calamine::Range<calamine::Data>=data.range((2,0),data.end().unwrap());
 		let mut data=data.rows();
 		assert_eq!(

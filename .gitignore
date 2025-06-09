@@ -1,3 +1,5 @@
 /target
 export.png
 .~lock.*
+*.xlsx
+!sample.xlsx

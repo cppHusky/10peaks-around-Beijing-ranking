@@ -9,16 +9,16 @@ const COLORS:[RGBColor;5]=[
 	RGBColor(0x27,0xae,0xef),
 	RGBColor(0xb3,0x3d,0xc6),
 ];
-const WIDTH:i32=3156;
-const HEADING_HEIGHT:i32=600;
-const PIECE_LEFT:i32=656;
-const PIECE_RIGHT:i32=2800;
+const WIDTH:i32=3356;
+const HEADING_HEIGHT:i32=650;
+const PIECE_LEFT:i32=856;
+const PIECE_RIGHT:i32=3000;
 const PIECE_HEIGHT:i32=60;
 const PIECE_SEP:i32=40;
 pub fn draw(records:&Vec<record::Record>,title:&String)->Result<(),Box<dyn std::error::Error>>{
 	let max_count:i32=records[0].sum();
 	let unit_len:i32=(PIECE_RIGHT-PIECE_LEFT)/max_count;
-	let height:i32=HEADING_HEIGHT+(records.len() as i32)*(PIECE_HEIGHT+PIECE_SEP);
+	let height:i32=HEADING_HEIGHT+(records.len() as i32)*(PIECE_HEIGHT+PIECE_SEP)+50;
 	let root=BitMapBackend::new(
 		"export.png",
 		(WIDTH as u32,height as u32),
@@ -31,7 +31,7 @@ pub fn draw(records:&Vec<record::Record>,title:&String)->Result<(),Box<dyn std::
 }
 fn draw_captions(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,title:String){
 	let _=root.draw(&Text::new(
-		title,
+		title.clone(),
 		(PIECE_LEFT,100),
 		("Noto Sans CJK SC",108.,FontStyle::Bold).into_font()
 	));
@@ -63,9 +63,9 @@ fn draw_captions(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,title:S
 		));
 	};
 	block("太行之巅",0.2,0);
-	block("京西龙脊",0.35,1);
-	block("军都龙脉",0.5,2);
-	block("燕山天路",0.65,3);
+	block("燕山天路",0.35,1);
+	block("京西龙脊",0.5,2);
+	block("军都龙脉",0.65,3);
 	block("坝上风云",0.8,4);
 	let _=root.draw(&Text::new(
 		"✓",
@@ -79,12 +79,9 @@ fn draw_captions(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,title:S
 	));
 }
 fn draw_records(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,records:&Vec<record::Record>,unit_len:i32){
-let mut y_offset=0;
-let mut last_sum=record::Record::MAXIMUM.iter().sum::<i32>()+1;
-for r in records{
-//if r.sum()==0{
-		//	continue;
-		//}
+	let mut y_offset=0;
+	let mut last_sum=record::Record::MAXIMUM.iter().sum::<i32>()+1;
+	for r in records{
 		if r.sum()!=last_sum && r.sum()>0{
 			last_sum=r.sum();
 			let _=root.draw(&Text::new(
@@ -94,8 +91,8 @@ for r in records{
 			));
 		}
 		let pos=text_anchor::Pos::new(text_anchor::HPos::Right,text_anchor::VPos::Center);
-		let text_style=TextStyle::from(("Noto Sans CJK SC",80.0).into_font()).pos(pos);
-		let text_bold_style=TextStyle::from(("Noto Sans CJK SC",80.0,FontStyle::Bold).into_font()).pos(pos);
+		let text_style=TextStyle::from(("Noto Sans CJK SC",80.).into_font()).pos(pos);
+		let text_bold_style=TextStyle::from(("Noto Sans CJK SC",80.,FontStyle::Bold).into_font()).pos(pos);
 		let draw_pieces=|start_pos:i32,end_pos:i32,id:usize|{
 			if start_pos==end_pos{
 				return;
@@ -131,9 +128,10 @@ for r in records{
 				Into::<ShapeStyle>::into(&BLACK).filled(),
 			));
 		}
+		eprintln!("drawing {}...",&r.name());
 		let _=root.draw(&Text::new(
 			r.name().as_str(),
-			(PIECE_LEFT-50,HEADING_HEIGHT+y_offset),
+			(PIECE_LEFT-51,HEADING_HEIGHT+y_offset),
 			&text_style,
 		));
 		y_offset+=PIECE_HEIGHT+PIECE_SEP;
@@ -141,18 +139,30 @@ for r in records{
 }
 fn draw_gridlines(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,unit_len:i32,height:i32,max_count:i32){
 	let _=root.draw(&PathElement::new(
-		[(PIECE_LEFT-4,HEADING_HEIGHT-PIECE_HEIGHT),(PIECE_LEFT-4,height-PIECE_HEIGHT)],
+		[(PIECE_LEFT-3,HEADING_HEIGHT-PIECE_HEIGHT),(PIECE_LEFT-3,height-PIECE_HEIGHT-PIECE_SEP)],
 		ShapeStyle::from(RGBColor(0x00,0x00,0x00)).stroke_width(4),
 	));
 	for i in 1..max_count+1{
+		let pos=text_anchor::Pos::new(text_anchor::HPos::Center,text_anchor::VPos::Center);
+		let text_style=TextStyle::from(("Noto Sans CJK SC",40.).into_font()).pos(pos);
+		let _=root.draw(&Text::new(
+			i.to_string(),
+			(PIECE_LEFT+unit_len*i,HEADING_HEIGHT-100),
+			&text_style,
+		));
+		let _=root.draw(&Text::new(
+			i.to_string(),
+			(PIECE_LEFT+unit_len*i,height-50),
+			&text_style,
+		));
 		if i%5==0{
 			let _=root.draw(&PathElement::new(
-				[(PIECE_LEFT+unit_len*i,HEADING_HEIGHT-PIECE_HEIGHT),(PIECE_LEFT+unit_len*i,height-PIECE_HEIGHT)],
+				[(PIECE_LEFT+unit_len*i,HEADING_HEIGHT-PIECE_HEIGHT),(PIECE_LEFT+unit_len*i,height-PIECE_HEIGHT-PIECE_SEP)],
 				ShapeStyle::from(RGBColor(0x00,0x00,0x00)).stroke_width(4),
 			));
 		}else{
 			let _=root.draw(&DashedPathElement::new(
-				[(PIECE_LEFT+unit_len*i,HEADING_HEIGHT-PIECE_HEIGHT),(PIECE_LEFT+unit_len*i,height-PIECE_HEIGHT)],
+				[(PIECE_LEFT+unit_len*i,HEADING_HEIGHT-PIECE_HEIGHT),(PIECE_LEFT+unit_len*i,height-PIECE_HEIGHT-PIECE_SEP)],
 				4,
 				12,
 				ShapeStyle::from(RGBColor(0x00,0x00,0x00)).stroke_width(4),
