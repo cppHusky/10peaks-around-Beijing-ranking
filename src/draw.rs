@@ -41,10 +41,10 @@ fn draw_captions(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,title:S
 		(PIECE_LEFT/2,350),
 		TextStyle::from(("Noto Sans CJK SC",80.,FontStyle::Bold).into_font()).pos(text_anchor::Pos::new(text_anchor::HPos::Left,text_anchor::VPos::Center)),
 	));
-	let _=root.draw(&Circle::new(
+	let _=root.draw(&Text::new(
+		"★",
 		(((PIECE_LEFT as f64)*0.95+(PIECE_RIGHT as f64)*0.05) as i32,300),
-		PIECE_HEIGHT/3,
-		Into::<ShapeStyle>::into(&BLACK).filled(),
+		TextStyle::from(("Noto Sans CJK SC",80.,FontStyle::Bold).into_font()).pos(text_anchor::Pos::new(text_anchor::HPos::Center,text_anchor::VPos::Center)),
 	));
 	let _=root.draw(&Text::new(
 		"东灵完成",
@@ -91,9 +91,10 @@ fn draw_records(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,records:
 			));
 		}
 		let pos=text_anchor::Pos::new(text_anchor::HPos::Right,text_anchor::VPos::Center);
+		let pos_center=text_anchor::Pos::new(text_anchor::HPos::Center,text_anchor::VPos::Center);
 		let text_style=TextStyle::from(("Noto Sans CJK SC",80.).into_font()).pos(pos);
-		let text_bold_style=TextStyle::from(("Noto Sans CJK SC",80.,FontStyle::Bold).into_font()).pos(pos);
-		let draw_pieces=|start_pos:i32,end_pos:i32,id:usize|{
+		let text_bold_center_style=TextStyle::from(("Noto Sans CJK SC",80.,FontStyle::Bold).into_font()).pos(pos_center);
+		let draw_pieces=|start_pos:i32,end_pos:i32,id:usize|{//TODO: Needed optimization
 			if start_pos==end_pos{
 				return;
 			}
@@ -112,7 +113,7 @@ fn draw_records(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,records:
 				let _=root.draw(&Text::new(
 					"✓",
 					(PIECE_LEFT+end_pos*unit_len-unit_len/2,HEADING_HEIGHT+y_offset+5),
-					&text_bold_style,
+					&text_bold_center_style,
 				));
 			}
 		};
@@ -122,10 +123,10 @@ fn draw_records(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,records:
 		draw_pieces(r.sum_prefix(0),r.sum_prefix(1),1);
 		draw_pieces(0,r.sum_prefix(0),0);
 		if r.dongling(){
-			let _=root.draw(&Circle::new(
-				(PIECE_LEFT+unit_len/2,HEADING_HEIGHT+y_offset),
-				PIECE_HEIGHT/3,
-				Into::<ShapeStyle>::into(&BLACK).filled(),
+			let _=root.draw(&Text::new(
+				"★",
+				(PIECE_LEFT+unit_len/2,HEADING_HEIGHT+y_offset+5),
+				&text_bold_center_style,
 			));
 		}
 		eprintln!("drawing {}...",&r.name());
