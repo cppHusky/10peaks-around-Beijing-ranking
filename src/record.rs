@@ -9,15 +9,10 @@ pub struct Record{
 }
 impl Record{
 	pub const MAXIMUM:[i32;5]=[10,5,5,5,5];
-	pub fn new()->Self{
-		Self{
-			id:0,
-			name:String::new(),
-			record:[0;5],
-			sum:0,
-			dongling:false,
-		}
+	pub fn dongling(&self)->bool{
+		self.dongling
 	}
+	#[allow(dead_code)]
 	pub fn from(id:i32,name:String,record:[i32;5],dongling:bool)->Self{
 		Self{
 			id,
@@ -26,6 +21,9 @@ impl Record{
 			sum:record.iter().sum(),
 			dongling,
 		}
+	}
+	pub fn get(&self,index:usize)->i32{
+		return self.record[index];
 	}
 	pub fn from_row(row:&[calamine::Data])->Self{
 		let id:i32=row[0].as_string().unwrap().parse::<i32>().expect("Unable to parse id");
@@ -46,14 +44,21 @@ impl Record{
 	pub fn name(&self)->&String{
 		&self.name
 	}
+	#[allow(dead_code)]
+	pub fn new()->Self{
+		Self{
+			id:0,
+			name:String::new(),
+			record:[0;5],
+			sum:0,
+			dongling:false,
+		}
+	}
 	pub fn sum(&self)->i32{
 		self.sum
 	}
 	pub fn sum_prefix(&self,n:usize)->i32{
 		self.record.iter().take(n+1).sum()
-	}
-	pub fn dongling(&self)->bool{
-		self.dongling
 	}
 }
 impl PartialOrd<Record> for Record{

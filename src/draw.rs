@@ -80,10 +80,18 @@ fn draw_captions(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,title:S
 }
 fn draw_records(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,records:&Vec<record::Record>,unit_len:i32){
 	let mut y_offset=0;
-	let mut last_sum=record::Record::MAXIMUM.iter().sum::<i32>()+1;
-	for r in records{
-		if r.sum()!=last_sum && r.sum()>0{
-			last_sum=r.sum();
+	let mut iter=records.iter().peekable();
+	while let Some(r)=iter.next(){
+		if let Some(r_next)=iter.peek(){
+			if r.sum()!=r_next.sum(){
+				let _=root.draw(&Text::new(
+					r.sum().to_string(),
+					(PIECE_LEFT+r.sum()*unit_len+35,HEADING_HEIGHT+y_offset+8),
+					TextStyle::from(("Noto Sans CJK Sc",108.0,FontStyle::Bold).into_font()).pos(text_anchor::Pos::new(text_anchor::HPos::Left,text_anchor::VPos::Center)),
+				));
+			}
+		}
+		else{
 			let _=root.draw(&Text::new(
 				r.sum().to_string(),
 				(PIECE_LEFT+r.sum()*unit_len+50,HEADING_HEIGHT+y_offset),
@@ -94,21 +102,20 @@ fn draw_records(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,records:
 		let pos_center=text_anchor::Pos::new(text_anchor::HPos::Center,text_anchor::VPos::Center);
 		let text_style=TextStyle::from(("Noto Sans CJK SC",80.).into_font()).pos(pos);
 		let text_bold_center_style=TextStyle::from(("Noto Sans CJK SC",80.,FontStyle::Bold).into_font()).pos(pos_center);
-		let draw_pieces=|start_pos:i32,end_pos:i32,id:usize|{//TODO: Needed optimization
-			if start_pos==end_pos{
+		let draw_pieces=|start_pos:i32,length:i32,id:usize|{
+			if length==0{
 				return;
 			}
-			else{
-				let _=root.draw(&Rectangle::new(
-					[(PIECE_LEFT,HEADING_HEIGHT-PIECE_HEIGHT/2+y_offset),(PIECE_LEFT+end_pos*unit_len-PIECE_HEIGHT/2+1,HEADING_HEIGHT+PIECE_HEIGHT/2+y_offset)],
-					COLORS[id].filled(),
-				));
-				let _=root.draw(&Circle::new(
-					(PIECE_LEFT+end_pos*unit_len-PIECE_HEIGHT/2,HEADING_HEIGHT+y_offset),
-					PIECE_HEIGHT/2-1,
-					COLORS[id].filled(),
-				));
-			}
+			let end_pos=start_pos+length;
+			let _=root.draw(&Rectangle::new(
+				[(PIECE_LEFT,HEADING_HEIGHT-PIECE_HEIGHT/2+y_offset),(PIECE_LEFT+end_pos*unit_len-PIECE_HEIGHT/2+1,HEADING_HEIGHT+PIECE_HEIGHT/2+y_offset)],
+				COLORS[id].filled(),
+			));
+			let _=root.draw(&Circle::new(
+				(PIECE_LEFT+end_pos*unit_len-PIECE_HEIGHT/2,HEADING_HEIGHT+y_offset),
+				PIECE_HEIGHT/2-1,
+				COLORS[id].filled(),
+			));
 			if end_pos-start_pos==record::Record::MAXIMUM[id]{
 				let _=root.draw(&Text::new(
 					"✓",
@@ -117,11 +124,11 @@ fn draw_records(root:&DrawingArea<BitMapBackend,plotters::coord::Shift>,records:
 				));
 			}
 		};
-		draw_pieces(r.sum_prefix(3),r.sum(),4);
-		draw_pieces(r.sum_prefix(2),r.sum_prefix(3),3);
-		draw_pieces(r.sum_prefix(1),r.sum_prefix(2),2);
-		draw_pieces(r.sum_prefix(0),r.sum_prefix(1),1);
-		draw_pieces(0,r.sum_prefix(0),0);
+		draw_pieces(r.sum_prefix(3),r.get(4),4);
+		draw_pieces(r.sum_prefix(2),r.get(3),3);
+		draw_pieces(r.sum_prefix(1),r.get(2),2);
+		draw_pieces(r.sum_prefix(0),r.get(1),1);
+		draw_pieces(0,r.get(0),0);
 		if r.dongling(){
 			let _=root.draw(&Text::new(
 				"★",

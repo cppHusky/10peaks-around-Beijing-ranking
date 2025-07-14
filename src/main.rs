@@ -2,6 +2,7 @@ mod record;
 mod draw;
 use calamine::Reader;
 fn main()->Result<(),Box<dyn std::error::Error>>{
+	let start_time=chrono::Local::now();
 	let file_path:String=std::env::args().nth(1).expect("The first arg is file_path that must be provided.");
 	let title:String=std::env::args().nth(2).expect("The second arg is the title that must be provided.");
 	let mut workbook:calamine::Xlsx<_>=calamine::open_workbook(&file_path).expect(&format!("Cannot open {}",&file_path));
@@ -15,5 +16,9 @@ fn main()->Result<(),Box<dyn std::error::Error>>{
 		}
 	}
 	records.sort();
-	draw::draw(&records,&title)
+	let _=draw::draw(&records,&title);
+	let end_time=chrono::Local::now();
+	let time_spent=end_time-start_time;
+	println!("Finished generating in {} ms.",time_spent.num_milliseconds());
+	Ok(())
 }
