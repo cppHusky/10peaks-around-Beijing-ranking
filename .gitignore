@@ -1,5 +1,5 @@
-/target
-export.png
-.~lock.*
-*.xlsx
-!sample.xlsx
+dist/
+node_modules/
+build/
+.env
+.env.*
