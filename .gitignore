@@ -3,3 +3,6 @@ node_modules/
 build/
 .env
 .env.*
+.~lock.*
+*.xlsx
+!sample.xlsx
