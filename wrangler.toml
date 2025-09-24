@@ -1,0 +1,9 @@
+name="ranking"
+compatibility_date="2024-09-24"
+[build]
+command="pnpm build"
+cwd="."
+[build.upload]
+format="modules"
+dir="dist"
+main="dist/index.html"
