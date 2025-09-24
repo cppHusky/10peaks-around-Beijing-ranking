@@ -14,7 +14,7 @@ export type Piece={
   "东灵完成":"是"|"否",
 }
 let pieces:Piece[]=undefined;
-class Data{
+export class Data{
   name:string;
   cumulates:number[];
   dongling:boolean;
@@ -75,5 +75,5 @@ function titleConfirmListener(event){
   document.getElementById("download").addEventListener("click",downloadClickListener);
 }
 function downloadClickListener(event){
-  saveSvgAsPng(document.getElementById("graph-container").firstChild,"export.png");
+  saveSvgAsPng(document.getElementById("graph-container").innerHtml,"export.png");
 }
