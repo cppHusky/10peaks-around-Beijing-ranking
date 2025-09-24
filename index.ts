@@ -75,5 +75,5 @@ function titleConfirmListener(event){
   document.getElementById("download").addEventListener("click",downloadClickListener);
 }
 function downloadClickListener(event){
-  saveSvgAsPng(document.getElementById("graph-container").innerHtml,"export.png");
+  saveSvgAsPng(document.getElementById("graph-container").innerHTML,"export.png");
 }
