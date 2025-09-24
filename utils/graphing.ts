@@ -1,16 +1,16 @@
 import * as d3 from "d3";
 import {Data} from "../index";
 const colors=["#ea5545","#ef9b20","#bdcf32","#27aeef","#b33dc6"];
-const width=3356;//width of whole picture
-const headingHeight=650;//height of title and caption
-const pieceLeft=856;//horizontal position of piece starts
-const pieceRight=3000;//horizontal position of piece ends
-const pieceHeight=60;//height of each piece
-const pieceSep=40;//gap between pieces
+const width=1240;//width of whole picture
+const headingHeight=240;//height of title and caption
+const pieceLeft=240;//horizontal position of piece starts
+const pieceRight=1150;//horizontal position of piece ends
+const pieceHeight=18;//height of each piece
+const pieceSep=12;//gap between pieces
 export function drawWhole(data:Data[],title:string){
   const maxCount=data[0].cumulates.at(-1);
   const unitLen=(pieceRight-pieceLeft)/maxCount;
-  const height=headingHeight+data.length*(pieceHeight+pieceSep)+50;
+  const height=headingHeight+data.length*(pieceHeight+pieceSep)+pieceHeight;
   d3.select("#graph-container")
     .selectAll("*")
     .remove();
@@ -28,41 +28,48 @@ export function drawWhole(data:Data[],title:string){
     .style("font-family","sans");
 }
 const drawCaptions=(svg,title:string)=>{
+  d3.select("head")
+    .append("style")
+    .text(`
+      .caption{
+        font-size:20px;
+        text-anchor:middle;
+      }
+    `);
   svg.append("text")
     .attr("x",pieceLeft)
-    .attr("y",100)
-    .style("font-size","108px")
+    .attr("y",80)
+    .style("font-size","38px")
     .text(title);
   svg.append("text")
-    .attr("x",pieceLeft/2)
-    .attr("y",350)
-    .style("font-size","80px")
+    .attr("x",pieceLeft*0.7)
+    .attr("y",160)
+    .attr("class","caption")
+    .style("font-weight","bold")
     .text("图例");
   svg.append("text")
     .attr("x",pieceLeft*0.95+pieceRight*0.05)
-    .attr("y",300)
-    .style("font-size","80px")
+    .attr("y",145)
+    .style("font-size","24px")
     .style("text-anchor","middle")
     .text("★");
   svg.append("text")
     .attr("x",pieceLeft*0.95+pieceRight*0.05)
-    .attr("y",400)
-    .style("font-size","80px")
-    .style("text-anchor","middle")
+    .attr("y",180)
+    .attr("class","caption")
     .text("东灵完成");
   const makeBlock=(caption,posRate,color)=>{
     svg.append("rect")
-      .attr("x",pieceLeft*(1-posRate)+pieceRight*posRate)
-      .attr("y",300-pieceHeight)
+      .attr("x",pieceLeft*(1-posRate)+pieceRight*posRate-pieceHeight/2)
+      .attr("y",150-pieceHeight)
       .attr("width",pieceHeight)
       .attr("height",pieceHeight)
       .style("fill",color);
     svg.append("text")
       .attr("x",pieceLeft*(1-posRate)+pieceRight*posRate)
-      .attr("y",400)
+      .attr("y",180)
+      .attr("class","caption")
       .style("fill",color)
-      .style("font-size","80px")
-      .style("text-anchor","middle")
       .text(caption);
   };
   makeBlock("太行之巅",0.2,colors[0]);
@@ -72,15 +79,14 @@ const drawCaptions=(svg,title:string)=>{
   makeBlock("坝上风云",0.8,colors[4]);
   svg.append("text")
     .attr("x",pieceLeft*0.05+pieceRight*0.95)
-    .attr("y",300)
-    .style("font-size","80px")
+    .attr("y",145)
+    .style("font-size","24px")
     .style("text-anchor","middle")
     .text("✓");
   svg.append("text")
     .attr("x",pieceLeft*0.05+pieceRight*0.95)
-    .attr("y",400)
-    .style("font-size","80px")
-    .style("text-anchor","middle")
+    .attr("y",180)
+    .attr("class","caption")
     .text("支线完成");
 }
 const drawGridlines=(svg,unitLen:number,height:number,maxCount:number)=>{
@@ -89,19 +95,19 @@ const drawGridlines=(svg,unitLen:number,height:number,maxCount:number)=>{
     .text(`
       .solid{
         stroke:solid;
-        stroke-width:3;
+        stroke-width:1;
       }
       .dashed{
-        stroke-dasharray:3 5;
-        stroke-width:3;
+        stroke-dasharray:1 2;
+        stroke-width:1;
       }
     `);
   svg.append("line")
-    .attr("class","solid")
-    .attr("x1",pieceLeft-2)
-    .attr("y1",headingHeight-pieceHeight)
-    .attr("x2",pieceLeft-2)
-    .attr("y2",height-pieceHeight)
+    .attr("x1",pieceLeft-1)
+    .attr("y1",headingHeight-pieceSep)
+    .attr("x2",pieceLeft-1)
+    .attr("y2",height-pieceSep)
+    .attr("stroke-width",2)
     .attr("stroke","black");
   for(let i=1;i <maxCount+1;i++){
     const x=pieceLeft+unitLen*i;
@@ -114,14 +120,14 @@ const drawGridlines=(svg,unitLen:number,height:number,maxCount:number)=>{
         }
       })
       .attr("x1",x)
-      .attr("y1",headingHeight-pieceHeight)
+      .attr("y1",headingHeight-pieceSep)
       .attr("x2",x)
-      .attr("y2",height-pieceHeight)
+      .attr("y2",height-pieceSep)
       .attr("stroke","black");
     svg.append("text")
       .attr("x",x)
-      .attr("y",headingHeight-pieceHeight*1.5)
-      .style("font-size","40px")
+      .attr("y",headingHeight-pieceSep*1.5)
+      .style("font-size","12px")
       .style("text-anchor","middle")
       .text(i.toString());
   }
@@ -146,7 +152,7 @@ const drawRecords=(svg,data:Data[],unitLen:number)=>{
       svg.append("text")
         .attr("x",endPos+pieceHeight/2-unitLen/2)
         .attr("y",yOffset+pieceHeight*0.9)
-        .style("font-size","60px")
+        .style("font-size","18px")
         .style("text-anchor","middle")
         .style("font-weight","bold")
         .text("✓");
@@ -156,7 +162,7 @@ const drawRecords=(svg,data:Data[],unitLen:number)=>{
     svg.append("text")
       .attr("x",pieceLeft-pieceHeight/2)
       .attr("y",headingHeight+i*(pieceHeight+pieceSep)+pieceHeight*0.9)
-      .style("font-size","80px")
+      .style("font-size","20px")
       .style("text-anchor","end")
       .text(record.name);
     const yOffset=headingHeight+i*(pieceHeight+pieceSep);
@@ -169,7 +175,7 @@ const drawRecords=(svg,data:Data[],unitLen:number)=>{
       svg.append("text")
         .attr("x",pieceLeft+unitLen/2)
         .attr("y",headingHeight+i*(pieceHeight+pieceSep)+pieceHeight*0.9)
-        .style("font-size","60px")
+        .style("font-size","18px")
         .style("text-anchor","middle")
         .text("★");
     }
@@ -177,7 +183,7 @@ const drawRecords=(svg,data:Data[],unitLen:number)=>{
       svg.append("text")
         .attr("x",pieceLeft+unitLen*record.sum+pieceHeight/2)
         .attr("y",headingHeight+i*(pieceHeight+pieceSep)+pieceHeight*0.9)
-        .style("font-size","96px")
+        .style("font-size","24px")
         .style("text-anchor","begin")
         .style("font-weight","bold")
         .text(record.sum.toString());
