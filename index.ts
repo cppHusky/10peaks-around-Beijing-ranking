@@ -29,6 +29,9 @@ export class Data{
       piece["坝上风云"]
     ].map((sum=>value=>sum+=value)(0));
   }
+  get sum():number{
+    return this.cumulates[4];
+  }
 }
 let data:Data[]=[];
 let title=null;
