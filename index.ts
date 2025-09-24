@@ -40,7 +40,8 @@ function fileChangeListener(event){
     alert("请选择文件！");
     return;
   }
-  readFile(target.files[0]).then((content)=>{
+  const fileName=file.name.replace(/\.[^/.]+$/,"");
+  readFile(file).then((content)=>{
     const blob:ArrayBuffer=content;
     const workbook=XLSX.read(blob);
     const sheet=workbook.Sheets["10峰排行榜"];
@@ -52,7 +53,8 @@ function fileChangeListener(event){
   });
   document.getElementById("title-trigger").innerHTML=`
     <hr/>
-    <input type="text" id="title" placeholder="请输入标题"></input>
+    标题：
+    <input type="text" id="title" value=${fileName} style="width:320px;"/>
     <button id="confirm">确认</button>
   `;
   document.getElementById("confirm").addEventListener("click",titleConfirmListener);
@@ -75,5 +77,5 @@ function titleConfirmListener(event){
   document.getElementById("download").addEventListener("click",downloadClickListener);
 }
 function downloadClickListener(event){
-  saveSvgAsPng(document.getElementById("graph-container").innerHTML,"export.png");
+  saveSvgAsPng(document.getElementById("graph-container"),"export.png");
 }
