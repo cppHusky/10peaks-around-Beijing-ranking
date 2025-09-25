@@ -34,7 +34,6 @@ export class Data{
   }
 }
 let data:Data[]=[];
-let title=null;
 document.getElementById("file").addEventListener("change",fileChangeListener);
 function fileChangeListener(event){
   const target=event.target as HTMLInputElement;
@@ -43,7 +42,7 @@ function fileChangeListener(event){
     alert("请选择文件！");
     return;
   }
-  const fileName=file.name.replace(/\.[^/.]+$/,"");
+  const title=file.name.replace(/\.[^/.]+$/,"");
   readFile(file).then((content)=>{
     const blob:ArrayBuffer=content;
     const workbook=XLSX.read(blob);
@@ -53,31 +52,12 @@ function fileChangeListener(event){
       data.push(new Data(piece));
     }
     data.sort(compare);
+    document.getElementById("download-trigger").innerHTML=`
+      <button id="download">下载此图片 (png)</button>
+    `;
+    drawWhole(data,title);
+    document.getElementById("download").addEventListener("click",downloadClickListener);
   });
-  document.getElementById("title-trigger").innerHTML=`
-    <hr/>
-    标题：
-    <input type="text" id="title" value=${fileName} style="width:320px;"/>
-    <button id="confirm">确认</button>
-  `;
-  document.getElementById("confirm").addEventListener("click",titleConfirmListener);
-}
-function titleConfirmListener(event){
-  title=(document.getElementById("title") as HTMLInputElement).value;
-  if(!data){
-    alert("请选择文件！");
-    return;
-  }
-  if(!title){
-    alert("请输入标题！");
-    return;
-  }
-  document.getElementById("download-trigger").innerHTML=`
-    <hr/>
-    <button id="download">下载此图片 (png)</button>
-  `;
-  drawWhole(data,title);
-  document.getElementById("download").addEventListener("click",downloadClickListener);
 }
 function downloadClickListener(event){
   saveSvgAsPng(document.getElementById("graph-container"),"export.png");
