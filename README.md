@@ -1,9 +1,5 @@
 # 徒步强国京畿十峰挑战赛 数据可视化
 
-## 构建
+[](https://ranking.cpphusky.workers.dev)
 
-```bash
-cargo sample.xlsx Sample
-```
-
-然后生成 `export.png`。
+通过 Vite 构建，存于 Cloudflare Workers。
