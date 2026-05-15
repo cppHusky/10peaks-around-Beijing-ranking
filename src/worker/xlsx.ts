@@ -118,7 +118,7 @@ export async function parseAttendanceWorkbook(buffer: ArrayBuffer): Promise<Atte
     const serialText = cellText(workbook, `A${row}`);
     const name = cellText(workbook, `C${row}`).trim();
     const phone = normalizePhone(cellText(workbook, `D${row}`));
-    const attendTimeText = cellText(workbook, `F${row}`).trim();
+    const attendTimeText = cellText(workbook, `E${row}`).trim();
     const hasRealData = Boolean(name || phone || attendTimeText);
 
     if (!hasRealData) {
