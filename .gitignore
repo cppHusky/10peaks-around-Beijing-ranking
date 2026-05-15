@@ -5,4 +5,6 @@ build/
 .env.*
 .~lock.*
 *.xlsx
-!sample.xlsx
+.dev.vars
+.wrangler
+*.pdf

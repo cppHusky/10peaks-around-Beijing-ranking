@@ -2,18 +2,12 @@
 <html lang="zh-Hans">
   <head>
     <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>徒步强国京畿十峰挑战赛 排行榜</title>
     <link rel="icon" type="image/png" href="/static/favicon.ico"/>
   </head>
   <body>
-    <div>
-      选择 XLSX 文件
-      <input type="file" id="file" accept=".xlsx"/>
-    </div>
-    <div id="download-trigger"></div>
-    <div>
-      <svg id="graph-container"></svg>
-    </div>
+    <div id="app"></div>
+    <script type="module" src="/index.ts"></script>
   </body>
-  <script type="module" src="/index.ts"></script>
 </html>

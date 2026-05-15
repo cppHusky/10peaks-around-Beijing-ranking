@@ -1,15 +1,11 @@
 {
-    "compilerOptions":{
-        "module":"nodenext",
-        "moduleResolution":"nodenext",
-        "target":"esnext",
-        "noEmit":true,
-        "lib":[
-            "dom",
-            "esnext"
-        ]
-    },
-    "files":[
-        "index.ts"
-    ]
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "target": "ESNext",
+    "noEmit": true,
+    "strict": true,
+    "lib": ["DOM", "DOM.Iterable", "ESNext"]
+  },
+  "include": ["index.ts", "src/**/*.ts"]
 }

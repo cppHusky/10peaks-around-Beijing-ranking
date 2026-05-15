@@ -1,7 +1,24 @@
 name="ranking"
+main="src/worker.ts"
 compatibility_date="2024-09-24"
 [build]
 command="pnpm build"
 cwd="./"
 [assets]
 directory="./dist"
+binding="ASSETS"
+not_found_handling="single-page-application"
+
+# 创建 D1 后将 database_id 替换为实际 ID：
+# pnpm wrangler d1 create ranking
+[[d1_databases]]
+binding="DB"
+database_name = "ranking"
+database_id = "d430a60f-0ddc-4899-a6de-a6d26d490023"
+
+# 创建 R2 bucket 后确认 bucket_name 与实际名称一致：
+# pnpm wrangler r2 bucket create ranking-source
+[[r2_buckets]]
+binding="BUCKET"
+bucket_name="ranking-source"
+preview_bucket_name="preview-ranking-source"
