@@ -71,10 +71,38 @@ function renderLeaderboard(rows: LeaderboardRow[]): void {
       </div>
     ` : ""}
     ${rows.length === 0 ? `<div class="empty-state"><h2>还没有有效打卡数据</h2><p>管理员上传报名表和活动参与表后，完成数大于 0 的参与者会出现在这里。</p></div>` : ""}
-    ${rows.length > 0 ? `<div class="chart-wrap">${leaderboardSvg(rows)}</div>` : ""}
+    ${rows.length > 0 ? `<div class="chart-wrap">${leaderboardSvg(rows)}</div>${detailTable(rows)}` : ""}
   `);
 
   document.getElementById("download-png")?.addEventListener("click", () => downloadPng());
+}
+
+function detailTable(rows: LeaderboardRow[]): string {
+  return `
+    <section class="detail-section">
+      <h2>打卡详表</h2>
+      <div class="table-wrap">
+        <table class="detail-table">
+          <thead><tr><th>名字</th><th>完成打卡点</th></tr></thead>
+          <tbody>
+            ${rows.map((row) => `
+              <tr>
+                <td class="detail-name">${escapeHtml(row.name)}</td>
+                <td><div class="chip-list">${completedPeakChips(row.mask)}</div></td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  `;
+}
+
+function completedPeakChips(mask: number): string {
+  return PEAKS
+    .filter((_peak, index) => hasPeak(mask, index))
+    .map((peak) => `<span class="chip">${escapeHtml(peak)}</span>`)
+    .join("");
 }
 
 function leaderboardSvg(rows: LeaderboardRow[]): string {
