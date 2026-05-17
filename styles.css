@@ -194,6 +194,7 @@ th { color: var(--muted); font-size: 13px; font-weight: 700; }
 .detail-section { margin-top: 22px; }
 .detail-section h2 { margin-bottom: 14px; }
 .detail-table { min-width: 720px; }
+.detail-rank { width: 64px; color: var(--muted); font-weight: 700; text-align: center; }
 .detail-name { width: 180px; font-weight: 650; white-space: nowrap; }
 .chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
 

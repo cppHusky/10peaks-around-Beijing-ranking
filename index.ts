@@ -78,19 +78,24 @@ function renderLeaderboard(rows: LeaderboardRow[]): void {
 }
 
 function detailTable(rows: LeaderboardRow[]): string {
+  let rank = 1;
   return `
     <section class="detail-section">
       <h2>打卡详表</h2>
       <div class="table-wrap">
         <table class="detail-table">
-          <thead><tr><th>名字</th><th>完成打卡点</th></tr></thead>
+          <thead><tr><th>排名</th><th>名字</th><th>完成打卡点</th></tr></thead>
           <tbody>
-            ${rows.map((row) => `
-              <tr>
-                <td class="detail-name">${escapeHtml(row.name)}</td>
-                <td><div class="chip-list">${completedPeakChips(row.mask)}</div></td>
-              </tr>
-            `).join("")}
+            ${rows.map((row) => {
+              const displayRank = hasPeak(row.mask, 0) ? String(rank++) : "*";
+              return `
+                <tr>
+                  <td class="detail-rank">${displayRank}</td>
+                  <td class="detail-name">${escapeHtml(row.name)}</td>
+                  <td><div class="chip-list">${completedPeakChips(row.mask)}</div></td>
+                </tr>
+              `;
+            }).join("")}
           </tbody>
         </table>
       </div>
