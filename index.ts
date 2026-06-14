@@ -120,10 +120,14 @@ function leaderboardSvg(rows: LeaderboardRow[]): string {
   const height = top + rows.length * rowHeight + 70;
   const unit = barWidth / Math.max(PEAKS.length, 1);
 
-  const legend = BRANCHES.map((branch, index) => {
-    const x = marginLeft + index * 150;
-    return `<g><rect x="${x}" y="92" width="12" height="12" fill="${branchColors[index]}"/><text x="${x + 18}" y="103">${escapeHtml(branch.name)}</text></g>`;
-  }).join("");
+  const legendSpacing = Math.floor(barWidth / 8);
+  const legend =
+    `<g>${starSvg(marginLeft + 6, 97)}<text x="${marginLeft + 18}" y="103">东灵完成</text></g>` +
+    BRANCHES.map((branch, index) => {
+      const x = marginLeft + (index + 1) * legendSpacing;
+      return `<g><rect x="${x}" y="92" width="12" height="12" fill="${branchColors[index]}"/><text x="${x + 18}" y="103">${escapeHtml(branch.name)}</text></g>`;
+    }).join("") +
+    `<g>${checkSvg(marginLeft + 7 * legendSpacing + 6, 97)}<text x="${marginLeft + 7 * legendSpacing + 18}" y="103">支线完成</text></g>`;
 
   const axis = Array.from({ length: Math.floor(PEAKS.length / 5) + 1 }, (_, index) => index * 5)
     .filter((value) => value <= PEAKS.length)
