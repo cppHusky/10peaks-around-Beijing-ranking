@@ -1,6 +1,6 @@
 import { BRANCHES, PEAKS } from "./shared/peaks";
 import { clearSessionCookie, createSessionCookie, isAdmin, requireAdmin } from "./worker/auth";
-import { deleteAttendanceSource, deleteRawSource, getLeaderboard, getReadySource, listReadySources, publishAttendanceSource, publishRawSource, rebuildAllFinal } from "./worker/db";
+import { deleteAttendanceSource, deleteRawSource, getLeaderboard, getPeakActivities, getReadySource, listReadySources, publishAttendanceSource, publishRawSource, rebuildAllFinal } from "./worker/db";
 import { handleErrors, HttpError, json, readJson, requireMethod, text } from "./worker/http";
 import type { Env } from "./worker/types";
 import { parseActivityWorkbook, parseAttendanceWorkbook } from "./worker/xlsx";
@@ -23,6 +23,16 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
   if (url.pathname === "/api/leaderboard") {
     requireMethod(request, "GET");
     return json({ branches: BRANCHES, peaks: PEAKS, rows: await getLeaderboard(env.DB) });
+  }
+
+  if (url.pathname === "/api/leaderboard/peak-activities") {
+    requireMethod(request, "GET");
+    const serial = parseInt(url.searchParams.get("serial") ?? "", 10);
+    const peak = parseInt(url.searchParams.get("peak") ?? "", 10);
+    if (!Number.isFinite(serial) || !Number.isFinite(peak) || peak < 0 || peak >= 30) {
+      throw new HttpError(400, "参数不合法");
+    }
+    return json({ activities: await getPeakActivities(env.DB, serial, 1 << peak) });
   }
 
   if (url.pathname === "/api/admin/login") {

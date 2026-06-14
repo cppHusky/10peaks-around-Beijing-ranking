@@ -8,6 +8,13 @@ type LeaderboardRow = {
   total_count: number;
 };
 
+type PeakActivity = {
+  source: string;
+  start_date: string;
+  end_date: string;
+  counted: number;
+};
+
 type FileList = {
   attendance: null | { name: string; key: string; size: number; uploaded: string | null };
   activities: Array<{ name: string; key: string; size: number; uploaded: string | null }>;
@@ -75,6 +82,7 @@ function renderLeaderboard(rows: LeaderboardRow[]): void {
   `);
 
   document.getElementById("download-png")?.addEventListener("click", () => downloadPng());
+  bindPeakPopover();
 }
 
 function detailTable(rows: LeaderboardRow[]): string {
@@ -92,7 +100,7 @@ function detailTable(rows: LeaderboardRow[]): string {
                 <tr>
                   <td class="detail-rank">${displayRank}</td>
                   <td class="detail-name">${escapeHtml(row.name)}</td>
-                  <td><div class="chip-list">${completedPeakChips(row.mask)}</div></td>
+                  <td><div class="chip-list">${completedPeakChips(row.mask, row.serial)}</div></td>
                 </tr>
               `;
             }).join("")}
@@ -100,14 +108,85 @@ function detailTable(rows: LeaderboardRow[]): string {
         </table>
       </div>
     </section>
+    <div id="peak-popover" class="peak-popover" hidden></div>
   `;
 }
 
-function completedPeakChips(mask: number): string {
+function completedPeakChips(mask: number, serial: number): string {
   return PEAKS
-    .filter((_peak, index) => hasPeak(mask, index))
-    .map((peak) => `<span class="chip">${escapeHtml(peak)}</span>`)
+    .flatMap((peak, index) => hasPeak(mask, index)
+      ? [`<button class="chip chip-btn" type="button" data-serial="${serial}" data-peak="${index}">${escapeHtml(peak)}</button>`]
+      : []
+    )
     .join("");
+}
+
+function bindPeakPopover(): void {
+  const popover = document.getElementById("peak-popover");
+  if (!popover) return;
+
+  let activeBtn: HTMLElement | null = null;
+
+  function closePopover(): void {
+    popover!.hidden = true;
+    activeBtn?.removeAttribute("aria-expanded");
+    activeBtn = null;
+  }
+
+  document.addEventListener("click", (event) => {
+    const btn = (event.target as Element).closest<HTMLElement>(".chip-btn");
+    if (!btn) { closePopover(); return; }
+    if (btn === activeBtn) { closePopover(); return; }
+
+    const serial = Number(btn.dataset.serial);
+    const peakIndex = Number(btn.dataset.peak);
+    const peakName = PEAKS[peakIndex] ?? "";
+
+    activeBtn?.removeAttribute("aria-expanded");
+    activeBtn = btn;
+    btn.setAttribute("aria-expanded", "true");
+
+    popover.hidden = false;
+    popover.innerHTML = `<div class="peak-popover-title">${escapeHtml(peakName)}</div><div class="peak-popover-loading">加载中...</div>`;
+    positionPopover(popover, btn);
+
+    api<{ activities: PeakActivity[] }>(`/api/leaderboard/peak-activities?serial=${serial}&peak=${peakIndex}`)
+      .then(({ activities }) => {
+        if (activeBtn !== btn) return;
+        if (activities.length === 0) {
+          popover.innerHTML = `<div class="peak-popover-title">${escapeHtml(peakName)}</div><div class="peak-popover-empty">无活动记录</div>`;
+          return;
+        }
+        const rows = activities.map((a) => `
+          <tr class="${a.counted ? "" : "peak-activity-uncounted"}">
+            <td>${escapeHtml(a.source)}</td>
+            <td>${escapeHtml(a.start_date)}</td>
+            <td>${escapeHtml(a.end_date)}</td>
+            ${a.counted ? "" : "<td class=\"peak-activity-badge\">未计入</td>"}
+          </tr>`).join("");
+        popover.innerHTML = `
+          <div class="peak-popover-title">${escapeHtml(peakName)}</div>
+          <table class="peak-activity-table">
+            <thead><tr><th>活动</th><th>开始</th><th>结束</th><th></th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>`;
+      })
+      .catch((err) => {
+        if (activeBtn !== btn) return;
+        popover.innerHTML = `<div class="peak-popover-title">${escapeHtml(peakName)}</div><div class="peak-popover-empty">${escapeHtml(errorMessage(err))}</div>`;
+      });
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closePopover();
+  });
+}
+
+function positionPopover(popover: HTMLElement, anchor: HTMLElement): void {
+  const rect = anchor.getBoundingClientRect();
+  const scrollY = window.scrollY;
+  popover.style.top = `${rect.bottom + scrollY + 6}px`;
+  popover.style.left = `${Math.max(8, rect.left)}px`;
 }
 
 function leaderboardSvg(rows: LeaderboardRow[]): string {

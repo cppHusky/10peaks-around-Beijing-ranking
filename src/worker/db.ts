@@ -188,6 +188,29 @@ export async function rebuildFinalForPhones(db: D1Database, phones: string[]): P
   await runAtomicBatch(db, finalRebuildStatements(db, [...new Set(phones)].filter(Boolean)));
 }
 
+export type PeakActivity = {
+  source: string;
+  start_date: string;
+  end_date: string;
+  counted: number;
+};
+
+export async function getPeakActivities(db: D1Database, serial: number, peakBit: number): Promise<PeakActivity[]> {
+  await ensureSchema(db);
+  const rows = await db
+    .prepare(
+      `SELECT r.source, r.start_date, r.end_date,
+              CASE WHEN date(a.attend_time) <= date(r.end_date, '+1 day') THEN 1 ELSE 0 END AS counted
+       FROM raw r
+       JOIN attendance a ON a.phone = r.phone
+       WHERE a.serial = ?1 AND (r.mask & ?2) != 0
+       ORDER BY r.start_date`,
+    )
+    .bind(serial, peakBit)
+    .all<PeakActivity>();
+  return rows.results ?? [];
+}
+
 export async function getLeaderboard(db: D1Database): Promise<LeaderboardRow[]> {
   await ensureSchema(db);
   const rows = await db

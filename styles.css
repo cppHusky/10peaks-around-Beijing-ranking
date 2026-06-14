@@ -208,6 +208,58 @@ th { color: var(--muted); font-size: 13px; font-weight: 700; }
   font-size: 13px;
 }
 
+.chip-btn {
+  border: none;
+  cursor: pointer;
+  transition: background .12s;
+}
+
+.chip-btn:hover, .chip-btn[aria-expanded="true"] {
+  background: #ddd3c5;
+}
+
+.peak-popover {
+  position: absolute;
+  z-index: 100;
+  min-width: 280px;
+  max-width: 520px;
+  padding: 12px 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 4px 18px rgba(0,0,0,.10);
+  font-size: 13px;
+}
+
+.peak-popover-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.peak-popover-loading, .peak-popover-empty {
+  color: var(--muted);
+}
+
+.peak-activity-table {
+  min-width: unset;
+  width: 100%;
+}
+
+.peak-activity-table th,
+.peak-activity-table td {
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.peak-activity-uncounted {
+  color: var(--muted);
+}
+
+.peak-activity-badge {
+  color: var(--danger);
+  white-space: nowrap;
+}
+
 .subtle, .message { color: var(--muted); }
 
 .empty-state {
