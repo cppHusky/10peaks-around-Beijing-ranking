@@ -8,3 +8,4 @@ build/
 .dev.vars
 .wrangler
 *.pdf
+*.typ
