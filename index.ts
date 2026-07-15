@@ -36,7 +36,7 @@ const root = document.getElementById("app");
 if (!root) throw new Error("缺少 #app 容器");
 const app = root;
 
-const branchColors = ["#6f8f4d", "#c28e3e", "#866e9f", "#bd6c47", "#4f7f91", "#8c765f"];
+const branchColors = ["#7aa14c", "#d59336", "#9068b2", "#ce6941", "#468da3", "#a17e58"];
 
 function route(): void {
   if (location.pathname.startsWith("/admin")) {
