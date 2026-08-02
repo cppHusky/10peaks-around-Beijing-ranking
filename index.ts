@@ -36,6 +36,9 @@ const root = document.getElementById("app");
 if (!root) throw new Error("缺少 #app 容器");
 const app = root;
 
+let latestRows: LeaderboardRow[] = [];
+let showRank = false;
+
 const branchColors = ["#7aa14c", "#d59336", "#9068b2", "#ce6941", "#468da3", "#a17e58"];
 
 function route(): void {
@@ -62,6 +65,7 @@ async function renderPublic(): Promise<void> {
 
   try {
     const data = await api<{ rows: LeaderboardRow[] }>("/api/leaderboard");
+    latestRows = data.rows;
     renderLeaderboard(data.rows);
   } catch (error) {
     setPublicContent(`<div class="empty-state"><h2>暂时无法读取榜单</h2><p>${escapeHtml(errorMessage(error))}</p></div>`);
@@ -72,16 +76,25 @@ function renderLeaderboard(rows: LeaderboardRow[]): void {
   setPublicContent(`
     ${rows.length > 0 ? `
       <div class="toolbar chart-toolbar">
+        <label class="toggle-label">
+          <input type="checkbox" class="toggle-input" id="show-rank" ${showRank ? "checked" : ""} />
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          <span class="toggle-text">显示排名</span>
+        </label>
         <div class="actions">
           <button class="button" id="download-png" type="button">下载 PNG</button>
         </div>
       </div>
     ` : ""}
     ${rows.length === 0 ? `<div class="empty-state"><h2>还没有有效打卡数据</h2><p>管理员上传报名表和活动参与表后，完成数大于 0 的参与者会出现在这里。</p></div>` : ""}
-    ${rows.length > 0 ? `<div class="chart-wrap">${leaderboardSvg(rows)}</div>${detailTable(rows)}` : ""}
+    ${rows.length > 0 ? `<div class="chart-wrap">${leaderboardSvg(rows, showRank)}</div>${detailTable(rows)}` : ""}
   `);
 
   document.getElementById("download-png")?.addEventListener("click", () => downloadPng());
+  document.getElementById("show-rank")?.addEventListener("change", (e) => {
+    showRank = (e.target as HTMLInputElement).checked;
+    renderLeaderboard(latestRows);
+  });
   bindPeakPopover();
 }
 
@@ -189,7 +202,7 @@ function positionPopover(popover: HTMLElement, anchor: HTMLElement): void {
   popover.style.left = `${Math.max(8, rect.left)}px`;
 }
 
-function leaderboardSvg(rows: LeaderboardRow[]): string {
+function leaderboardSvg(rows: LeaderboardRow[], showRank: boolean): string {
   const width = 1240;
   const marginLeft = 230;
   const marginRight = 90;
@@ -215,14 +228,17 @@ function leaderboardSvg(rows: LeaderboardRow[]): string {
       return `<g><line x1="${x}" y1="${top - 18}" x2="${x}" y2="${height - 44}" stroke="#d8d0c5" stroke-dasharray="2 4"/><text x="${x}" y="${top - 26}" text-anchor="middle">${value}</text></g>`;
     }).join("");
 
+  let rankSeq = 1;
   const records = rows.map((row, rowIndex) => {
     const y = top + rowIndex * rowHeight;
     const counts = branchCounts(row.mask);
     const completeAll = isAllComplete(counts);
     const bars = completeAll ? completeGradientBarSvg(y, marginLeft, barWidth) : progressBarsSvg(counts, y, marginLeft, unit);
     const markers = completeAll ? completeMarkers(y, marginLeft, unit) : progressMarkers(row.mask, counts, y, marginLeft, unit);
+    const displayRank = hasPeak(row.mask, 0) ? String(rankSeq++) : "*";
     return `
       <g>
+        ${showRank ? `<text x="30" y="${y + 14}" class="rank" text-anchor="middle">${displayRank}</text>` : ""}
         <text x="${marginLeft - 18}" y="${y + 14}" class="name" text-anchor="end">${escapeHtml(row.name)}</text>
         <line x1="${marginLeft}" y1="${y + 9}" x2="${marginLeft + barWidth}" y2="${y + 9}" stroke="#eee8dd"/>
         ${bars}
@@ -245,6 +261,7 @@ function leaderboardSvg(rows: LeaderboardRow[]): string {
         .caption, .count { font-size: 14px; fill: #786f64; }
         .name { font-size: 16px; }
         .count { font-weight: 700; fill: #2f2a24; }
+        .rank { font-size: 15px; fill: #786f64; font-weight: 650; }
       </style>
       <rect width="100%" height="100%" fill="#fbf8f1"/>
       <text x="${width / 2}" y="48" class="title" text-anchor="middle">京畿十峰挑战赛排行榜</text>

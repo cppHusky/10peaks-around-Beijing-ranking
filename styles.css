@@ -85,8 +85,58 @@ h2 { margin-bottom: 8px; font-size: 20px; }
 }
 
 .toolbar p { margin: 0; color: var(--muted); }
-.chart-toolbar { justify-content: flex-end; }
+.chart-toolbar { justify-content: space-between; }
 .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.toggle-track {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: #d8cfc0;
+  transition: background .18s;
+}
+
+.toggle-input:checked + .toggle-track {
+  background: var(--accent);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.15);
+  transition: transform .18s;
+}
+
+.toggle-input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(18px);
+}
+
+.toggle-text {
+  font-size: 14px;
+  color: var(--ink);
+}
 
 .admin-status {
   display: grid;
