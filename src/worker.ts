@@ -29,7 +29,7 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
     requireMethod(request, "GET");
     const serial = parseInt(url.searchParams.get("serial") ?? "", 10);
     const peak = parseInt(url.searchParams.get("peak") ?? "", 10);
-    if (!Number.isFinite(serial) || !Number.isFinite(peak) || peak < 0 || peak >= 30) {
+    if (!Number.isFinite(serial) || !Number.isFinite(peak) || peak < 0 || peak >= PEAKS.length) {
       throw new HttpError(400, "参数不合法");
     }
     return json({ activities: await getPeakActivities(env.DB, serial, 1 << peak) });
