@@ -28,6 +28,7 @@ export type R2ObjectBody = R2Object & {
   body: ReadableStream;
   httpMetadata?: { contentType?: string };
   writeHttpMetadata(headers: Headers): void;
+  arrayBuffer(): Promise<ArrayBuffer>;
 };
 
 export type R2Bucket = {

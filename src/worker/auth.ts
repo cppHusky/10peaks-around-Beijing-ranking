@@ -22,6 +22,14 @@ export function clearSessionCookie(): string {
   return `${COOKIE_NAME}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`;
 }
 
+export function requireAdminToken(request: Request, env: Env): void {
+  assertAdminToken(env);
+  const token = request.headers.get("authorization");
+  if (!token || !constantTimeEqual(token, `Bearer ${env.ADMIN_TOKEN!}`)) {
+    throw new HttpError(401, "管理员 token 不正确");
+  }
+}
+
 export async function requireAdmin(request: Request, env: Env): Promise<void> {
   const ok = await isAdmin(request, env);
   if (!ok) {

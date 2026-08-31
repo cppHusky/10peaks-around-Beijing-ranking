@@ -1,5 +1,5 @@
 import { BRANCHES, PEAKS } from "./shared/peaks";
-import { clearSessionCookie, createSessionCookie, isAdmin, requireAdmin } from "./worker/auth";
+import { clearSessionCookie, createSessionCookie, isAdmin, requireAdmin, requireAdminToken } from "./worker/auth";
 import { deleteAttendanceSource, deleteRawSource, getLeaderboard, getPeakActivities, getReadySource, listReadySources, publishAttendanceSource, publishRawSource, rebuildAllFinal } from "./worker/db";
 import { handleErrors, HttpError, json, readJson, requireMethod, text } from "./worker/http";
 import type { Env } from "./worker/types";
@@ -50,6 +50,12 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
   if (url.pathname === "/api/admin/session") {
     requireMethod(request, "GET");
     return json({ authenticated: await isAdmin(request, env) });
+  }
+
+  if (url.pathname === "/api/admin/reparse") {
+    requireMethod(request, "POST");
+    requireAdminToken(request, env);
+    return reparseActivities(env);
   }
 
   await requireAdmin(request, env);
@@ -146,6 +152,30 @@ async function uploadActivity(request: Request, env: Env): Promise<Response> {
       await deleteObjectBestEffort(env, upload.r2Key);
       throw error;
     }
+  }
+
+  return json({ ok: true, files: results, count: results.length, rows: results.reduce((sum, result) => sum + result.rows, 0) });
+}
+
+async function reparseActivities(env: Env): Promise<Response> {
+  const sources = await listReadySources(env.DB);
+  const results = [];
+
+  for (const source of sources.activities) {
+    const object = await env.BUCKET.get(source.r2_key);
+    if (!object) throw new HttpError(404, `文件对象缺失，请重新上传：${source.name}`);
+
+    const buffer = await object.arrayBuffer();
+    const records = await parseActivityWorkbook(buffer, source.name);
+    const published = await publishRawSource(env.DB, {
+      kind: "activity",
+      name: source.name,
+      r2_key: source.r2_key,
+      size: buffer.byteLength,
+      uploaded_at: source.uploaded_at,
+    }, records);
+
+    results.push({ filename: source.name, rows: records.length, affected: published.affected.length });
   }
 
   return json({ ok: true, files: results, count: results.length, rows: results.reduce((sum, result) => sum + result.rows, 0) });
