@@ -40,6 +40,7 @@ let latestRows: LeaderboardRow[] = [];
 let showRank = false;
 let detailBranchIndex: number | null = null;
 let peakPopoverBound = false;
+let chartCollapsed = false;
 
 const branchColors = ["#7aa14c", "#d59336", "#9068b2", "#ce6941", "#468da3", "#a17e58"];
 
@@ -61,7 +62,9 @@ async function renderPublic(): Promise<void> {
         </div>
         <a class="text-link" href="/admin">管理员入口</a>
       </header>
-      <section id="public-content" class="panel muted-panel">正在读取排行榜...</section>
+      <section id="public-content" class="public-content">
+        <div class="panel muted-panel">正在读取排行榜...</div>
+      </section>
     </main>
   `;
 
@@ -70,29 +73,40 @@ async function renderPublic(): Promise<void> {
     latestRows = data.rows;
     renderLeaderboard(data.rows);
   } catch (error) {
-    setPublicContent(`<div class="empty-state"><h2>暂时无法读取榜单</h2><p>${escapeHtml(errorMessage(error))}</p></div>`);
+    setPublicContent(`<div class="panel muted-panel"><div class="empty-state"><h2>暂时无法读取榜单</h2><p>${escapeHtml(errorMessage(error))}</p></div></div>`);
   }
 }
 
 function renderLeaderboard(rows: LeaderboardRow[]): void {
   setPublicContent(`
+    ${rows.length === 0 ? `<div class="panel muted-panel"><div class="empty-state"><h2>还没有有效打卡数据</h2><p>管理员上传报名表和活动参与表后，完成数大于 0 的参与者会出现在这里。</p></div></div>` : ""}
     ${rows.length > 0 ? `
-      <div class="toolbar chart-toolbar">
-        <label class="toggle-label">
-          <input type="checkbox" class="toggle-input" id="show-rank" ${showRank ? "checked" : ""} />
-          <span class="toggle-track"><span class="toggle-thumb"></span></span>
-          <span class="toggle-text">显示排名</span>
-        </label>
-        <div class="actions">
-          <button class="button" id="download-png" type="button">下载 PNG</button>
+      <section class="panel chart-card">
+        <div class="toolbar chart-toolbar">
+          <h2 class="card-title">排行榜图</h2>
+          <div class="chart-card-actions">
+            <label class="toggle-label">
+              <input type="checkbox" class="toggle-input" id="show-rank" ${showRank ? "checked" : ""} />
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              <span class="toggle-text">显示排名</span>
+            </label>
+            <button class="button ghost" id="toggle-chart" type="button" aria-expanded="${!chartCollapsed}" aria-controls="leaderboard-chart-content">${chartCollapsed ? "展开排行榜" : "收起排行榜"}</button>
+            <button class="button" id="download-png" type="button">下载 PNG</button>
+          </div>
         </div>
-      </div>
+        <div id="leaderboard-chart-content"${chartCollapsed ? " hidden" : ""}>
+          <div class="chart-wrap">${leaderboardSvg(rows, showRank)}</div>
+        </div>
+      </section>
+      <section class="panel detail-card">${detailTable(rows)}</section>
     ` : ""}
-    ${rows.length === 0 ? `<div class="empty-state"><h2>还没有有效打卡数据</h2><p>管理员上传报名表和活动参与表后，完成数大于 0 的参与者会出现在这里。</p></div>` : ""}
-    ${rows.length > 0 ? `<div class="chart-wrap">${leaderboardSvg(rows, showRank)}</div>${detailTable(rows)}` : ""}
   `);
 
   document.getElementById("download-png")?.addEventListener("click", () => downloadPng());
+  document.getElementById("toggle-chart")?.addEventListener("click", () => {
+    chartCollapsed = !chartCollapsed;
+    renderLeaderboard(latestRows);
+  });
   document.getElementById("show-rank")?.addEventListener("change", (e) => {
     showRank = (e.target as HTMLInputElement).checked;
     renderLeaderboard(latestRows);

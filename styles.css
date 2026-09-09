@@ -60,6 +60,11 @@ h2 { margin-bottom: 8px; font-size: 20px; }
 
 .muted-panel { min-height: 160px; }
 .inner-panel { min-height: 190px; }
+.public-content { display: grid; gap: 24px; }
+.card-title { margin: 0; }
+.chart-card-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px 16px; }
+.chart-card .toolbar { margin-bottom: 0; }
+.detail-card { min-width: 0; }
 
 .metrics {
   display: grid;
@@ -366,6 +371,7 @@ input[type="password"], input[type="file"] {
 @media (max-width: 760px) {
   .shell { width: min(100vw - 20px, 1320px); padding-top: 28px; }
   .hero, .toolbar { display: grid; }
+  .chart-card-actions { justify-content: start; }
   .detail-toolbar { align-items: stretch; flex-direction: column; }
   .detail-filter { justify-content: space-between; }
   .detail-filter select { flex: 1; min-width: 0; }
