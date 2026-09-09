@@ -38,6 +38,8 @@ const app = root;
 
 let latestRows: LeaderboardRow[] = [];
 let showRank = false;
+let detailBranchIndex: number | null = null;
+let peakPopoverBound = false;
 
 const branchColors = ["#7aa14c", "#d59336", "#9068b2", "#ce6941", "#468da3", "#a17e58"];
 
@@ -95,58 +97,104 @@ function renderLeaderboard(rows: LeaderboardRow[]): void {
     showRank = (e.target as HTMLInputElement).checked;
     renderLeaderboard(latestRows);
   });
+  document.getElementById("detail-branch-filter")?.addEventListener("change", (e) => {
+    const value = (e.target as HTMLSelectElement).value;
+    detailBranchIndex = value === "" ? null : Number(value);
+    renderLeaderboard(latestRows);
+  });
   bindPeakPopover();
 }
 
 function detailTable(rows: LeaderboardRow[]): string {
+  const branchIndex = detailBranchIndex;
+  const filteredRows = branchIndex === null
+    ? rows
+    : rows
+      .filter((row) => branchCounts(row.mask)[branchIndex] > 0)
+      .sort((left, right) => {
+        const countDifference = branchCounts(right.mask)[branchIndex] - branchCounts(left.mask)[branchIndex];
+        return countDifference || left.serial - right.serial;
+      });
+  const branchOptions = BRANCHES.map((branch, index) => {
+    const completeCount = rows.filter((row) => branchCounts(row.mask)[index] === branch.peaks.length).length;
+    const selected = branchIndex === index ? " selected" : "";
+    return `<option value="${index}"${selected}>${escapeHtml(branch.name)}（${completeCount}人完成）</option>`;
+  }).join("");
+
   let rank = 1;
   return `
     <section class="detail-section">
-      <h2>打卡详表</h2>
-      <div class="table-wrap">
-        <table class="detail-table">
-          <thead><tr><th>排名</th><th>名字</th><th>完成打卡点</th></tr></thead>
-          <tbody>
-            ${rows.map((row) => {
-              const displayRank = hasPeak(row.mask, 0) ? String(rank++) : "*";
-              return `
-                <tr>
-                  <td class="detail-rank">${displayRank}</td>
-                  <td class="detail-name">${escapeHtml(row.name)}</td>
-                  <td><div class="chip-list">${completedPeakChips(row.mask, row.serial)}</div></td>
-                </tr>
-              `;
-            }).join("")}
-          </tbody>
-        </table>
+      <div class="detail-toolbar">
+        <h2>打卡详表</h2>
+        <label class="detail-filter" for="detail-branch-filter">
+          <span>筛选支线</span>
+          <select id="detail-branch-filter">
+            <option value=""${branchIndex === null ? " selected" : ""}>全部支线</option>
+            ${branchOptions}
+          </select>
+        </label>
       </div>
+      ${filteredRows.length === 0
+        ? `<div class="detail-empty">该支线还没有完成打卡的用户。</div>`
+        : `<div class="table-wrap">
+            <table class="detail-table">
+              <thead><tr><th>排名</th><th>名字</th><th>完成数量</th><th>完成打卡点</th></tr></thead>
+              <tbody>
+                ${filteredRows.map((row) => {
+                  const displayRank = branchIndex === null
+                    ? (hasPeak(row.mask, 0) ? String(rank++) : "*")
+                    : String(rank++);
+                  const completedCount = branchIndex === null
+                    ? row.total_count
+                    : branchCounts(row.mask)[branchIndex];
+                  return `
+                    <tr>
+                      <td class="detail-rank">${displayRank}</td>
+                      <td class="detail-name">${escapeHtml(row.name)}</td>
+                      <td class="detail-count">${completedCount}</td>
+                      <td><div class="chip-list">${completedPeakChips(row.mask, row.serial, branchIndex)}</div></td>
+                    </tr>
+                  `;
+                }).join("")}
+              </tbody>
+            </table>
+          </div>`}
     </section>
     <div id="peak-popover" class="peak-popover" hidden></div>
   `;
 }
 
-function completedPeakChips(mask: number, serial: number): string {
-  return PEAKS
-    .flatMap((peak, index) => hasPeak(mask, index)
-      ? [`<button class="chip chip-btn" type="button" data-serial="${serial}" data-peak="${index}">${escapeHtml(peak)}</button>`]
+function completedPeakChips(mask: number, serial: number, branchIndex: number | null): string {
+  const branchOffset = branchIndex === null
+    ? 0
+    : BRANCHES.slice(0, branchIndex).reduce((sum, branch) => sum + branch.peaks.length, 0);
+  const peaks = branchIndex === null ? PEAKS : BRANCHES[branchIndex]?.peaks ?? [];
+
+  return peaks
+    .flatMap((peak, index) => hasPeak(mask, branchOffset + index)
+      ? [`<button class="chip chip-btn" type="button" data-serial="${serial}" data-peak="${branchOffset + index}">${escapeHtml(peak)}</button>`]
       : []
     )
     .join("");
 }
 
 function bindPeakPopover(): void {
-  const popover = document.getElementById("peak-popover");
-  if (!popover) return;
+  if (peakPopoverBound) return;
+  peakPopoverBound = true;
 
   let activeBtn: HTMLElement | null = null;
 
   function closePopover(): void {
+    const popover = document.getElementById("peak-popover");
+    if (!popover) return;
     popover!.hidden = true;
     activeBtn?.removeAttribute("aria-expanded");
     activeBtn = null;
   }
 
   document.addEventListener("click", (event) => {
+    const popover = document.getElementById("peak-popover");
+    if (!popover) return;
     const btn = (event.target as Element).closest<HTMLElement>(".chip-btn");
     if (!btn) { closePopover(); return; }
     if (btn === activeBtn) { closePopover(); return; }

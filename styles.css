@@ -242,11 +242,24 @@ th, td { padding: 13px 12px; border-bottom: 1px solid var(--line); text-align: l
 th { color: var(--muted); font-size: 13px; font-weight: 700; }
 
 .detail-section { margin-top: 22px; }
-.detail-section h2 { margin-bottom: 14px; }
-.detail-table { min-width: 720px; }
+.detail-toolbar { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.detail-toolbar h2 { margin-bottom: 0; }
+.detail-filter { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.detail-filter select {
+  min-height: 40px;
+  min-width: 190px;
+  padding: 0 32px 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fffaf0;
+  color: var(--ink);
+}
+.detail-table { min-width: 820px; }
 .detail-rank { width: 64px; color: var(--muted); font-weight: 700; text-align: center; }
 .detail-name { width: 180px; font-weight: 650; white-space: nowrap; }
+.detail-count { width: 96px; text-align: center; white-space: nowrap; font-weight: 700; }
 .chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.detail-empty { padding: 16px 0; color: var(--muted); }
 
 .chip {
   display: inline-flex;
@@ -353,6 +366,9 @@ input[type="password"], input[type="file"] {
 @media (max-width: 760px) {
   .shell { width: min(100vw - 20px, 1320px); padding-top: 28px; }
   .hero, .toolbar { display: grid; }
+  .detail-toolbar { align-items: stretch; flex-direction: column; }
+  .detail-filter { justify-content: space-between; }
+  .detail-filter select { flex: 1; min-width: 0; }
   .metrics, .admin-grid { grid-template-columns: 1fr; }
   th, td { padding: 11px 8px; }
 }
