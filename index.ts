@@ -518,7 +518,7 @@ async function renderAdminDashboard(): Promise<void> {
           <div class="upload-progress-track"><div id="upload-progress-bar" class="upload-progress-bar"></div></div>
         </div>
       </div>
-      <div class="actions"><button id="rebuild" class="button ghost" type="button">重建缓存</button><button id="logout" class="button ghost" type="button">退出登录</button></div>
+      <div class="actions"><a class="button ghost" href="/api/admin/export/leaderboard.xlsx">导出排行榜 Excel</a><button id="rebuild" class="button ghost" type="button">重建缓存</button><button id="logout" class="button ghost" type="button">退出登录</button></div>
     </div>
     ${fileListHtml(files)}
   `);

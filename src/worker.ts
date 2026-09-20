@@ -1,6 +1,7 @@
 import { BRANCHES, PEAKS } from "./shared/peaks";
 import { clearSessionCookie, createSessionCookie, isAdmin, requireAdmin, requireAdminToken } from "./worker/auth";
-import { deleteAttendanceSource, deleteRawSource, getLeaderboard, getPeakActivities, getReadySource, listReadySources, publishAttendanceSource, publishRawSource, rebuildAllFinal } from "./worker/db";
+import { deleteAttendanceSource, deleteRawSource, getLeaderboard, getLeaderboardExportRows, getPeakActivities, getReadySource, listReadySources, publishAttendanceSource, publishRawSource, rebuildAllFinal } from "./worker/db";
+import { createLeaderboardWorkbook } from "./worker/export";
 import { handleErrors, HttpError, json, readJson, requireMethod, text } from "./worker/http";
 import type { Env } from "./worker/types";
 import { parseActivityWorkbook, parseAttendanceWorkbook } from "./worker/xlsx";
@@ -60,6 +61,11 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
 
   await requireAdmin(request, env);
 
+  if (url.pathname === "/api/admin/export/leaderboard.xlsx") {
+    requireMethod(request, "GET");
+    return exportLeaderboard(env);
+  }
+
   if (url.pathname === "/api/admin/files") {
     if (request.method === "GET") return json(await listFiles(env));
     if (request.method === "DELETE") return deleteFile(request, env, url);
@@ -87,6 +93,18 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
   }
 
   throw new HttpError(404, "API 不存在");
+}
+
+async function exportLeaderboard(env: Env): Promise<Response> {
+  const rows = await getLeaderboardExportRows(env.DB);
+  const workbook = createLeaderboardWorkbook(rows);
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, "").replace("T", "-");
+  const headers = new Headers({
+    "content-type": XLSX_CONTENT_TYPE,
+    "content-disposition": contentDisposition(`京畿十峰排行榜_${timestamp}.xlsx`),
+    "cache-control": "no-store",
+  });
+  return new Response(workbook, { headers });
 }
 
 async function uploadAttendance(request: Request, env: Env): Promise<Response> {

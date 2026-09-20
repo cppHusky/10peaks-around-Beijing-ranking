@@ -225,6 +225,19 @@ export async function getLeaderboard(db: D1Database): Promise<LeaderboardRow[]> 
   return rows.results ?? [];
 }
 
+export async function getLeaderboardExportRows(db: D1Database): Promise<LeaderboardRow[]> {
+  await ensureSchema(db);
+  const rows = await db
+    .prepare(
+      `SELECT a.serial, a.name, COALESCE(f.mask, 0) AS mask, COALESCE(f.total_count, 0) AS total_count
+       FROM attendance a
+       LEFT JOIN "final" f ON f.phone = a.phone
+       ORDER BY a.serial ASC`,
+    )
+    .all<LeaderboardRow>();
+  return rows.results ?? [];
+}
+
 function finalRebuildStatements(db: D1Database, phones: string[]): D1PreparedStatement[] {
   return phones.flatMap((phone) => [
     db.prepare(`DELETE FROM "final" WHERE phone = ?1`).bind(phone),
