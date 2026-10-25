@@ -7,8 +7,32 @@ export function createAnalysisExport(
   participants: ParticipantExportRow[],
   activities: ActivityExportRow[],
   exportedAt: string,
-): ArrayBuffer {
-  const participantIds = new Map(participants.map((row) => [row.phone, `p_${crypto.randomUUID()}`]));
+  idSecret: string,
+): Promise<ArrayBuffer> {
+  return createAnalysisExportWithStableIds(participants, activities, exportedAt, idSecret);
+}
+
+async function createAnalysisExportWithStableIds(
+  participants: ParticipantExportRow[],
+  activities: ActivityExportRow[],
+  exportedAt: string,
+  idSecret: string,
+): Promise<ArrayBuffer> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(idSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const phones = [...new Set([...participants.map((row) => row.phone), ...activities.map((row) => row.phone)])]
+    .map(normalizePhone);
+  const participantIds = new Map<string, string>();
+  await Promise.all(phones.map(async (phone) => {
+    const digest = new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode(phone)));
+    const id = [...digest].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+    participantIds.set(phone, `p1_${id}`);
+  }));
 
   const participantHeaders = [
     "参与者匿名编号",
@@ -21,7 +45,7 @@ export function createAnalysisExport(
     ...BRANCHES.map((branch) => `支线：${branch.name}（全部完成）`),
   ];
   const participantRows = participants.map((row) => [
-    participantIds.get(row.phone)!,
+    participantIds.get(normalizePhone(row.phone))!,
     row.name,
     row.is_registered === 1,
     row.registration_date,
@@ -45,7 +69,7 @@ export function createAnalysisExport(
   const activityRows = activities.map((row) => {
     const eligible = row.eligible === 1;
     return [
-      participantIds.get(row.phone)!,
+      participantIds.get(normalizePhone(row.phone))!,
       activityName(row.source),
       row.start_date,
       row.end_date,
@@ -66,12 +90,13 @@ export function createAnalysisExport(
     `导出时间：${exportedAt}`,
     "",
     "文件说明",
-    "- participants.csv：每位在报名表或活动表出现的人一行；参与者匿名编号为本次导出随机生成，用户昵称列仅报名者有值。",
+    "- participants.csv：每位在报名表或活动表出现的人一行；参与者匿名编号由手机号经带密钥的 HMAC-SHA-256 生成，用户昵称列仅报名者有值。",
     "- activities.csv：每人在每个活动表中的一条记录；参与者匿名编号可与 participants.csv 关联，包含已报名和未报名者。活动名称直接取上传文件名（去除 .xlsx 后缀）。",
     "- 两个 CSV 均为 UTF-8 编码，首行为中文字段名；是/否表示布尔状态。日期格式为 YYYY-MM-DD。",
     "",
     "字段说明",
-    "- 参与者匿名编号：本次导出随机生成，用于在两个 CSV 之间关联参与者；用户昵称与它共同用于识别报名者。是否报名为“否”的记录没有昵称、报名日期，最终统计及最终山峰状态留空。",
+    "- 参与者匿名编号：由手机号和服务端密钥经 HMAC-SHA-256 生成；密钥和手机号不变时，编号也不变。手机号本身不导出，匿名编号也无法用于反算手机号。",
+    "- 用户昵称用于识别报名者。未报名的用户在记录中没有昵称、报名日期，且最终统计的山峰状态留空。",
     "- 报名日期：仅保留日期，不含时分秒。最终打卡总数是最终计入的不同山峰数量；各山峰列是最终汇总状态。",
     "- “（本次活动打卡）”列表示该活动表中的打卡状态；支线列表示是否完成该支线全部山峰。",
     "- 符合计入资格：未报名者不符合资格；已报名者按报名日期是否不晚于活动结束日期的次日判断。资格判断说明提供中文原因。",
@@ -83,7 +108,7 @@ export function createAnalysisExport(
       ...branch.peaks.map((peak) => `  ${PEAKS.indexOf(peak) + 1}. ${peak}`),
     ]),
     "",
-    "隐私说明：导出包含报名者用户昵称（如果报名了十峰），不包含手机号。匿名编号仅在本次导出数据内部关联，再次导出数据时编号会发生变化。",
+    "隐私说明：导出数据中包含报名者用户昵称（如果报名了十峰），但不包含手机号。",
   ].join("\n");
 
   const archive = createZip([
@@ -109,6 +134,10 @@ function csvCell(value: unknown): string {
 
 function activityName(source: string): string {
   return source.replace(/\.xlsx$/i, "");
+}
+
+function normalizePhone(phone: string): string {
+  return phone.trim().replace(/\s+/g, "");
 }
 
 type ZipEntry = { name: string; content: string };

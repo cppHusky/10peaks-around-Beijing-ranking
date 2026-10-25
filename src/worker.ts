@@ -114,12 +114,17 @@ async function exportLeaderboard(env: Env): Promise<Response> {
 }
 
 async function exportAnalysis(env: Env): Promise<Response> {
+  const idSecret = env.ANALYTICS_ID_SECRET;
+  if (!idSecret || new TextEncoder().encode(idSecret).byteLength < 32) {
+    throw new HttpError(500, "未配置有效的 ANALYTICS_ID_SECRET（至少 32 字节）");
+  }
+
   const [participants, activities] = await Promise.all([
     getParticipantExportRows(env.DB),
     getActivityExportRows(env.DB),
   ]);
   const exportedAt = new Date().toISOString();
-  const archive = createAnalysisExport(participants, activities, exportedAt);
+  const archive = await createAnalysisExport(participants, activities, exportedAt, idSecret);
   const timestamp = exportedAt.slice(0, 19).replace(/[-:]/g, "").replace("T", "-");
   return new Response(archive, {
     headers: {

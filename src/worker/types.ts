@@ -48,4 +48,5 @@ export type Env = {
   BUCKET: R2Bucket;
   ASSETS?: { fetch(request: Request): Promise<Response> };
   ADMIN_TOKEN?: string;
+  ANALYTICS_ID_SECRET?: string;
 };
