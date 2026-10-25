@@ -1,7 +1,8 @@
 import { BRANCHES, PEAKS } from "./shared/peaks";
 import { clearSessionCookie, createSessionCookie, isAdmin, requireAdmin, requireAdminToken } from "./worker/auth";
-import { deleteAttendanceSource, deleteRawSource, getLeaderboard, getLeaderboardExportRows, getPeakActivities, getReadySource, listReadySources, publishAttendanceSource, publishRawSource, rebuildAllFinal } from "./worker/db";
+import { deleteAttendanceSource, deleteRawSource, getActivityExportRows, getLeaderboard, getLeaderboardExportRows, getParticipantExportRows, getPeakActivities, getReadySource, listReadySources, publishAttendanceSource, publishRawSource, rebuildAllFinal } from "./worker/db";
 import { createLeaderboardWorkbook } from "./worker/export";
+import { createAnalysisExport } from "./worker/analysis-export";
 import { handleErrors, HttpError, json, readJson, requireMethod, text } from "./worker/http";
 import type { Env } from "./worker/types";
 import { parseActivityWorkbook, parseAttendanceWorkbook } from "./worker/xlsx";
@@ -66,6 +67,11 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
     return exportLeaderboard(env);
   }
 
+  if (url.pathname === "/api/admin/export/analysis.zip") {
+    requireMethod(request, "GET");
+    return exportAnalysis(env);
+  }
+
   if (url.pathname === "/api/admin/files") {
     if (request.method === "GET") return json(await listFiles(env));
     if (request.method === "DELETE") return deleteFile(request, env, url);
@@ -105,6 +111,24 @@ async function exportLeaderboard(env: Env): Promise<Response> {
     "cache-control": "no-store",
   });
   return new Response(workbook, { headers });
+}
+
+async function exportAnalysis(env: Env): Promise<Response> {
+  const [participants, activities] = await Promise.all([
+    getParticipantExportRows(env.DB),
+    getActivityExportRows(env.DB),
+  ]);
+  const exportedAt = new Date().toISOString();
+  const archive = createAnalysisExport(participants, activities, exportedAt);
+  const timestamp = exportedAt.slice(0, 19).replace(/[-:]/g, "").replace("T", "-");
+  return new Response(archive, {
+    headers: {
+      "content-type": "application/zip",
+      "content-disposition": contentDisposition(`京畿十峰分析数据_${timestamp}.zip`),
+      "cache-control": "no-store, private",
+      "x-content-type-options": "nosniff",
+    },
+  });
 }
 
 async function uploadAttendance(request: Request, env: Env): Promise<Response> {

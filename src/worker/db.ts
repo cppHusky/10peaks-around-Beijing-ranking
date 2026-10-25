@@ -27,6 +27,25 @@ export type LeaderboardRow = {
   total_count: number;
 };
 
+export type ParticipantExportRow = {
+  phone: string;
+  name: string | null;
+  is_registered: number;
+  registration_date: string | null;
+  mask: number | null;
+  total_count: number | null;
+};
+
+export type ActivityExportRow = {
+  phone: string;
+  source: string;
+  start_date: string;
+  end_date: string;
+  mask: number;
+  is_registered: number;
+  eligible: number | null;
+};
+
 export type SourcePublishResult = {
   affected: string[];
   oldSource: SourceRow | null;
@@ -235,6 +254,41 @@ export async function getLeaderboardExportRows(db: D1Database): Promise<Leaderbo
        ORDER BY a.serial ASC`,
     )
     .all<LeaderboardRow>();
+  return rows.results ?? [];
+}
+
+export async function getParticipantExportRows(db: D1Database): Promise<ParticipantExportRow[]> {
+  await ensureSchema(db);
+  const rows = await db
+    .prepare(
+      `SELECT a.phone, a.name, date(a.attend_time) AS registration_date,
+              1 AS is_registered, COALESCE(f.mask, 0) AS mask, COALESCE(f.total_count, 0) AS total_count
+       FROM attendance a
+       LEFT JOIN "final" f ON f.phone = a.phone
+       UNION ALL
+       SELECT r.phone, NULL AS name, NULL AS registration_date, 0 AS is_registered, NULL AS mask, NULL AS total_count
+       FROM (SELECT DISTINCT phone FROM raw) r
+       LEFT JOIN attendance a ON a.phone = r.phone
+       WHERE a.phone IS NULL
+       ORDER BY is_registered DESC, registration_date ASC`,
+    )
+    .all<ParticipantExportRow>();
+  return rows.results ?? [];
+}
+
+export async function getActivityExportRows(db: D1Database): Promise<ActivityExportRow[]> {
+  await ensureSchema(db);
+  const rows = await db
+    .prepare(
+      `SELECT r.phone, r.source, r.start_date, r.end_date, r.mask,
+              CASE WHEN a.phone IS NULL THEN 0 ELSE 1 END AS is_registered,
+              CASE WHEN a.phone IS NULL THEN NULL
+                   WHEN date(a.attend_time) <= date(r.end_date, '+1 day') THEN 1 ELSE 0 END AS eligible
+       FROM raw r
+       LEFT JOIN attendance a ON a.phone = r.phone
+       ORDER BY r.start_date, r.end_date, r.source, r.phone`,
+    )
+    .all<ActivityExportRow>();
   return rows.results ?? [];
 }
 
